@@ -1,0 +1,24 @@
+{
+  "name": "cra-template-liaapi-ts",
+  "version": "1.0.0",
+  "keywords": [
+    "api",
+    "server",
+    "template",
+    "typescript"
+  ],
+  "description": "The base TypeScript template for Create Server Express App.",
+  "repository": {
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=16"
+  },
+  "bugs": {
+    "url": "https://github.com/sunlley/lia-template-api-ts/issues"
+  },
+  "files": [
+    "template",
+    "template.json"
+  ]
+}

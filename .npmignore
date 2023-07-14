@@ -1,0 +1,13 @@
+src
+tsconfig.json
+tslint.json
+.prettierrc
+package-lock.json
+.idea
+.git
+test
+node_modules
+./template/node_modules
+./template/node_modules/
+template/node_modules
+template/package-lock.json
