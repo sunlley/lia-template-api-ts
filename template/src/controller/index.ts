@@ -21,11 +21,19 @@ class Controller {
     }
 
     load() {
+        console.log('Load Controller');
+        console.log('-'.padEnd(84,'-'))
+        console.log(' | ', 'Controller'.padEnd(13),' | ', 'Function'.padEnd(24),' | ','Method'.padEnd(6),' | ','path')
+        console.log(' | ', '-'.padEnd(13,'-'),' | ', '-'.padEnd(24,'-'),' | ','-'.padEnd(6,'-'),' | ','-'.padEnd(19,'-'))
+
         for (const rulesKey in Rules) {
             let Rule = Rules[rulesKey];
             let instance = new Rule();
             this.loadRule(instance);
         }
+
+        console.log('-'.padEnd(84,'-'))
+
     }
 
     loadRule(instance: any) {
@@ -44,15 +52,17 @@ class Controller {
                 let _path = '';
                 if (controllerMetadata) {
                     _path = controllerMetadata;
+                    // console.log('_path1',_path)
                 } else {
                     _path = `/${instance.constructor.name.toLowerCase()}`;
+                    // console.log('_path2',_path)
                 }
                 if (path) {
-                    _path = `${_path}${path}/*`
+                    _path = `${_path}${path}`
                 } else {
                     _path = `${_path}/*`
                 }
-                console.log('LoadRule', instance.constructor.name, routeName,' | ',_path)
+                console.log(' | ', instance.constructor.name.padEnd(13),' | ', routeName.padEnd(24),' | ',type.toUpperCase().padEnd(6),' | ',_path)
 
                 const request = (req: any, res: any,next:any) => {
                     instance.route({method:routeName,path:_path},new RequestWrapper(req), new ResponseWrapper(res));

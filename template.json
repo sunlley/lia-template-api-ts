@@ -1,9 +1,9 @@
 {
   "package": {
     "scripts": {
-      "dev": "nodemon --watch ./src/**/* --exec ts-node ./src/start.ts",
+      "dev": "nodemon --ext js,ts --exec 'ts-node src/start.ts'",
+      "dev:win": "nodemon --ext js,ts --exec ts-node src/start.ts",
       "start": "ts-node ./src/start.ts --env production",
-      "local": "nodemon --watch ./src/**/* --exec ts-node ./src/start.ts --env local",
       "test": "npm run dev",
       "build": "echo 'build'",
       "eject": "echo 'eject'"

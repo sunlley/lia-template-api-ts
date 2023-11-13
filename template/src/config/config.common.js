@@ -1,6 +1,10 @@
+const package = require('../../package.json');
+
 module.exports = {
-    port: 9001,
-    name: 'Api',
+    name: package.name,
+    port: package.port,
+    version: package.version,
+    description: package.description,
     debug: true,
     AccessControlAllow:{
         Origin:"*",

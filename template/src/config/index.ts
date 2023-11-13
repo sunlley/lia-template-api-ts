@@ -32,13 +32,6 @@ const NODE_ARGS=matchArgv();
 process.env.NODE_ENV = NODE_ARGS.env?NODE_ARGS.env.toLowerCase():'development';
 let config = require('./config.common');
 
-if (process.env.NODE_ENV === "local") {
-    try {
-        let _config = require('./config.local');
-        config = Object.assign(config, _config);
-    } catch (e) {
-    }
-}
 if (process.env.NODE_ENV === "development") {
     try {
         let _config = require('./config.dev');
