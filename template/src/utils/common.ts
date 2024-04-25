@@ -1,7 +1,14 @@
 import {ControllerDataFormat} from "../types";
+import {AES, enc, MD5} from 'crypto-js';
+import {NetException} from "../exceptions";
 
+//注释：判断是否为空
 export const isVaN = (value: any) => {
-    return value == null || value === '';
+    return value == null || value.trim() === '';
+}
+
+export const random = (start: number, end: number) => {
+    return Math.floor(Math.random() * (end - start)) + start;
 }
 
 /**
@@ -77,7 +84,7 @@ export const formatDataNull = (data: any, format?: ControllerDataFormat<Object>)
                 value = format(dataKey, value, data);
                 data[dataKey] = value
             }
-        }else{
+        } else {
             delete data[dataKey];
         }
     }
@@ -94,7 +101,7 @@ export const formatDataNull = (data: any, format?: ControllerDataFormat<Object>)
  *      formatDataExclude(data1,["name"])
  *      console.log(data1)  =>> {age:18}
  */
-export const formatDataExclude=(data: any, keys: string[])=> {
+export const formatDataExclude = (data: any, keys: string[]) => {
     for (const dataKey in data) {
         if (keys.indexOf(dataKey) >= 0) {
             delete data[dataKey];
@@ -112,7 +119,7 @@ export const formatDataExclude=(data: any, keys: string[])=> {
  *      formatDataInclude(data1,["name"])
  *      console.log(data1)  =>> {name:"tom"}
  */
-export const formatDataInclude=(data: any, keys: string[])=> {
+export const formatDataInclude = (data: any, keys: string[]) => {
     for (const dataKey in data) {
         if (keys.indexOf(dataKey) < 0) {
             delete data[dataKey];
@@ -120,17 +127,124 @@ export const formatDataInclude=(data: any, keys: string[])=> {
     }
     return data;
 }
-
-export const formatDataTime=(data: any, keys: string[]) =>{
-    let __dateInfo: any = {};
-    for (const key of keys) {
-        try {
-            const date = new Date(data[key]);
-            data[key] = date.getTime();
-            __dateInfo[key] = date.toISOString();
-        } catch (e) {
-        }
+const DEFAULT_OFFSET = 'AABBCCDDEEFF';
+export const encrypt = (message: string, password: string | null, offset?: string) => {
+    if (password == null) {
+        return message;
     }
-    data.__date_info = __dateInfo;
-    return data;
+    let key = enc.Hex.parse(MD5(password).toString());
+    let result: any;
+    let iv;
+    if (offset) {
+        iv = enc.Hex.parse(offset);
+    } else {
+        iv = enc.Hex.parse(DEFAULT_OFFSET);
+    }
+    result = AES.encrypt(message, key, {iv});
+    return result.toString();
 }
+
+export const decrypt = (message: string, password: string | null, offset?: string) => {
+    if (password == null) {
+        return message;
+    }
+    let key = enc.Hex.parse(MD5(password).toString());
+    let result: any;
+    let iv;
+    if (offset) {
+        iv = enc.Hex.parse(offset);
+    } else {
+        iv = enc.Hex.parse(DEFAULT_OFFSET);
+    }
+    result = AES.decrypt(message, key, {iv});
+    return result.toString(enc.Utf8);
+}
+
+export const delay = (time: number = 1000) => {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve(true)
+        }, time);
+    })
+}
+
+export const error = (options: {
+    code: number,
+    message?: string,
+    language?: string,
+    values?: any[]
+} | number) => {
+    if (typeof options === 'number') {
+        throw new NetException(options, '', 'en');
+    } else {
+        let {code, message, language = 'en', values} = options;
+        const exception = new NetException(code, message, language);
+        if (!message) {
+            message = exception.message;
+        }
+        if (values && values.length > 0) {
+            for (let i = 0; i < values.length; i++) {
+                message = message.replace(`%s${i}`, values[i]);
+            }
+            exception.message = message;
+        }
+        exception.message = message;
+        throw exception;
+    }
+}
+
+export const assert = (params: any,
+                       keys: (string | `${string}|${string}`)[] | ([_key: string | `${string}|${string}`, _type: string])[],
+                       tag?: string) => {
+    const check_value = (key: string, value: any, type: any) => {
+        if (type === 'array') {
+            if (!Array.isArray(value)) {
+                error({code: 1002, values: [key, type]});
+            }
+        } else if (type === 'number') {
+            if (isNaN(value)) {
+                error({code: 1002, values: [key, type]});
+            }
+        } else if (type === 'string') {
+            if (typeof value !== 'string') {
+                error({code: 1002, values: [key, type]});
+            }
+        }
+
+    }
+    for (let key of keys) {
+        let _key = '';
+        let _type:string|undefined;
+        if (Array.isArray(key)) {
+            [_key, _type] = key;
+        } else if (typeof key === 'string') {
+            _key = key;
+        }
+        if (_key.indexOf('|') >= 0) {
+            //都为空时 报错
+            let nullCount = 0;
+            let keysTemp = _key.split('|');
+            for (const keysTempElement of keysTemp) {
+                let value = params[keysTempElement];
+                if (isVaN(value)) {
+                    nullCount++;
+                }else {
+                    check_value(keysTempElement, value,_type);
+                }
+            }
+            if (nullCount === keysTemp.length) {
+                error({code: 1001, values: [_key]});
+            }
+        } else {
+            let value = params[_key];
+            if (isVaN(params[_key])) {
+                error({code: 1001, values: [_key]});
+            }else {
+                check_value(_key, value,_type);
+            }
+        }
+
+
+    }
+}
+

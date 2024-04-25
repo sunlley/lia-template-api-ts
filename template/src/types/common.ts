@@ -1,8 +1,5 @@
 import {Request, Response} from 'express';
 import {NetException} from "../exceptions";
-
-
-
 export class RequestWrapper {
     request: Request;
     __PATH: string;
@@ -26,15 +23,15 @@ export class RequestWrapper {
 }
 
 export class ResponseWrapper {
-    responst: Response;
+    response: Response;
 
-    constructor(responst: Response) {
-        this.responst = responst;
+    constructor(response: Response) {
+        this.response = response;
     }
 
     onError(error: number | any, message?: string) {
         let result: any = {
-            errno: 500,
+            errno: 5000,
             message: message,
             data: {}
         };
@@ -44,7 +41,7 @@ export class ResponseWrapper {
         } else if (error instanceof Error) {
             result.message = error.message;
         }
-        this.responst.json(result)
+        this.response.json(result)
     }
 
     onResponse(errno: number | any, message: string = 'success', data: any = {}) {
@@ -68,7 +65,7 @@ export class ResponseWrapper {
                 result.data = _data.data;
             }
         }
-        this.responst.json(result);
+        this.response.json(result);
     }
 
 

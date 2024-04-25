@@ -5,38 +5,54 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --ext js,ts --exec 'ts-node src/start.ts'",
-    "dev:win": "nodemon --ext js,ts --exec ts-node src/start.ts",
-    "start": "ts-node ./src/start.ts --env production",
+    "dev": "nodemon --ext js,ts --exec  cross-env CONFIG=development ts-node ./src/start.ts",
+    "start": "cross-env CONFIG=production ts-node ./src/start.ts",
     "test": "npm run dev",
     "build": "echo 'build'",
     "eject": "echo 'eject'"
   },
   "nodemonConfig": {
     "ignore": [
+      "src/services/**"
     ]
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@types/body-parser": "^1.19.5",
-    "@types/cookie-parser": "^1.4.3",
-    "@types/express": "^4.17.17",
-    "@types/express-session": "^1.17.7",
-    "@types/node": "^20.2.1",
+    "@types/cookie-parser": "^1.4.5",
+    "@types/crypto-js": "^4.2.1",
+    "@types/express": "^4.17.20",
+    "@types/express-session": "^1.17.9",
+    "@types/node": "^20.8.9",
+    "@types/node-cron": "^3.0.11",
+    "@types/querystringify": "^2.0.2",
+    "cross-env": "^7.0.3",
+    "node-cron": "^3.0.3",
     "nodemon": "^2.0.22",
     "ts-node": "^10.9.1",
-    "tslib": "^2.5.0",
-    "typescript": "^5.0.4"
+    "tslib": "^2.6.2",
+    "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@cladeco/import-all": "^1.0.2",
+    "axios": "^1.6.7",
+    "body-parser": "^1.20.2",
     "cookie-parser": "^1.4.6",
+    "crypto-js": "^4.2.0",
+    "dayjs": "^1.11.10",
     "decimal.js": "^10.4.3",
+    "ethers": "^5.7.2",
     "express": "^4.18.2",
     "express-session": "^1.17.3",
-    "lia-common": "^1.0.1",
+    "lia-common": "^1.0.6",
+    "lia-mysql": "^1.0.1",
+    "lia-redis": "^1.0.0",
+    "lia-stack": "^1.0.5",
+    "near-api-js": "^4.0.1",
+    "querystringify": "^2.2.0",
     "reflect-metadata": "^0.1.13",
-    "require-all": "^3.0.0"
+    "require-all": "^3.0.0",
+    "web3-eth": "^4.3.1",
+    "web3-utils": "^4.0.7"
   }
 }

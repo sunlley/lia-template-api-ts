@@ -1,8 +1,10 @@
-import {isVaN} from "../utils";
-import Decimal from "decimal.js";
+import {assert, error, isVaN} from "../utils";
 
-import {ControllerDataFormat, RequestWrapper, ResponseWrapper, RouteMeta} from '../types';
+import {RequestWrapper, ResponseWrapper, RouteMeta} from '../types';
 import {NetException} from "../exceptions";
+import {Storage} from "../libs/storage";
+import 'node:util'
+import {inspect} from "node:util";
 
 export enum LANGUAGE {
     en = 'en',
@@ -52,119 +54,158 @@ export class Page {
 
 }
 
-export class ErrorController {
-    constructor() {
-    }
-
-    error(options: any) {
-        if (typeof options === 'number') {
-            throw new NetException(options, '', 'en');
-        } else {
-            let {code, message, language = 'en', params} = options;
-            let exception = new NetException(code, message, language);
-            message = exception.message;
-            if (params && params.length > 0) {
-                for (let i = 0; i < params.length; i++) {
-                    message = message.replace(`%s${i}`, params[i]);
-                }
-                exception.message = message;
-            }
-            throw exception;
-        }
-    }
-
-}
-
-export class ParamsController extends ErrorController {
-
-    //断言cans
+class ParamsController {
+    [key:string]:any;
     assertParams(params: any, keys: string[] = []) {
-        console.log(this.constructor.name, 'assertParams', params, keys)
+        // console.log(this.constructor.name, 'assertParams', params, keys)
         if (!params) {
             return;
         }
-        for (let key of keys) {
-            if (key.indexOf('|') >= 0) {
-                //都为空时 报错
-                let nullCount = 0;
-                let keysTemp = key.split('|');
-                for (const keysTempElement of keysTemp) {
-                    if (isVaN(params[keysTempElement])) {
-                        nullCount++;
-                    }
-                }
-                if (nullCount === keysTemp.length) {
-                    this.error({code: 101, params: [key]});
-                }
-            } else {
-                if (isVaN(params[key])) {
-                    this.error({code: 101, params: [key]});
-                }
-            }
-        }
+        assert(params, keys);
     }
 }
 
-export class BaseController extends ParamsController {
-    public whiteList: string[];
+export class BaseController extends ParamsController{
+    public whiteList: string[]=[];
     public controller: string;
 
-    constructor(whiteList = []) {
+    constructor(whiteList: string[] = []) {
         super()
-        this.whiteList = whiteList;
+        this.whiteList.push(... (whiteList??[]));
         this.controller = this.constructor.name;
-        this.route = this.route.bind(this);
+        // this.route = this.route.bind(this);
+    }
+
+    async formatData<T>(origin: any, rules: any, formats: any): Promise<T> {
+        if (!rules || rules.length === 0) {
+            return origin;
+        }
+        for (const rule of rules) {
+            if (!rule) {
+                continue;
+            }
+            if (rule.indexOf("|") < 0) {
+                if (formats && formats[rule]) {
+                    formats[rule](origin, rule);
+                } else {
+                    delete origin[rule];
+                }
+
+                continue;
+            }
+            let paramsKeys = rule.split('|');
+            if (paramsKeys.length < 2) {
+                continue;
+            }
+            if (formats && formats[rule]) {
+                formats[rule](origin, paramsKeys[0], paramsKeys[1]);
+            } else {
+                if (origin[paramsKeys[0]]) {
+                    let temp = origin[paramsKeys[0]];
+                    delete origin[paramsKeys[0]];
+                    origin[paramsKeys[1]] = temp;
+                }
+            }
+
+        }
+        return origin as T;
+    }
+
+
+    formatDateExclude(data: any, keys: string[]) {
+        for (const dataKey in data) {
+            if (keys.indexOf(dataKey) >= 0) {
+                delete data[dataKey];
+            }
+        }
+        return data;
+    }
+
+    formatDateInclude(data: any, keys: string[]) {
+        for (const dataKey in data) {
+            if (keys.indexOf(dataKey) < 0) {
+                delete data[dataKey];
+            }
+        }
+        return data;
+    }
+
+    formatDateTime(data: any, keys: string[]) {
+        let __dateInfo: any = {};
+        for (const key of keys) {
+            try {
+                const date = new Date(data[key]);
+                data[key] = date.getTime();
+                __dateInfo[key] = date.toISOString();
+            } catch (e) {
+            }
+        }
+        data.__dateInfo = __dateInfo;
+        return data;
     }
 
     page(params: any) {
         return new Page(params);
     }
-    route(route:RouteMeta,req: RequestWrapper, res: ResponseWrapper){
-        console.log('route', this.constructor.name, route);
-            const _this:any = this;
-            const onError = (error: any) => {
-                console.log(this.controller, 'Error', error)
-                res.onError(error);
-            }
-            const onResponse = (result: any) => {
-                if (typeof result === 'object') {
-                    if (result.hasOwnProperty('errno')
-                        && result.hasOwnProperty('data')) {
-                        if (!result.message) {
-                            result.message = 'success';
-                        }
-                        res.onResponse(result);
-                    } else {
-                        res.onResponse({errno: 0, message: 'success', data: result});
+
+    execute(route: RouteMeta, req: RequestWrapper, res: ResponseWrapper) {
+        console.log(new Date(), 'Call==>>', this.constructor.name, '#-', route.path, "-|-",JSON.stringify(req.__PARAMS));
+        const _this: any = this;
+        const onError = (error: any, route: RouteMeta) => {
+            console.log('-')
+            console.log('-', route.metadata, route.path, new Date())
+            console.error('-', inspect(error, {
+                compact: true,
+                depth: 1,
+                colors: true,
+                showHidden: false
+            }))
+            res.onError(error);
+        }
+        const onResponse = (result: any) => {
+            if (typeof result === 'object') {
+                if (result.hasOwnProperty('errno')
+                    && result.hasOwnProperty('data')) {
+                    if (!result.message) {
+                        result.message = 'success';
                     }
+                    res.onResponse(result);
                 } else {
-                    res.onResponse({errno: 0, message: 'success', data: {result}});
+                    res.onResponse({errno: 0, message: 'success', data: result});
                 }
+            } else {
+                res.onResponse({errno: 0, message: 'success', data: {result}});
             }
+        }
 
-            (()=>{
-                try {
-                    console.log(this)
-                    if (!_this[route.method]){
-                        this.error({code: 501, params: [`${route.method}`]});
-                        return
-                    }
-                    let params = Object.assign(Object.toSerialize(req.__COOKIES), req.__PARAMS);
-
-                    const result = _this[route.method](params, req, res);
-                    if (result instanceof Promise) {
-                        result.then(result => {
-                            onResponse(result)
-                        }).catch(error => {
-                            onError(error);
-                        })
-                    } else {
-                        onResponse(result);
-                    }
-                } catch (error) {
-                    onError(error);
+        (() => {
+            try {
+                if (!_this[route.method]) {
+                    error({code: 5001, values: [`${route.method}`]});
+                    return
                 }
-            })();
+                // let params = Object.assign(Object.toSerialize(req.__COOKIES), req.__PARAMS);
+                const params = {
+                    // ...req.__COOKIES,
+                    ...req.__PARAMS,
+                    ...(req.request.params || {})
+                }
+
+                const result = _this[route.method](params, req, res);
+                if (result instanceof Promise) {
+                    result.then(result => {
+                        onResponse(result)
+                    }).catch(error => {
+                        onError(error, route);
+                    })
+                } else {
+                    onResponse(result);
+                }
+            } catch (error) {
+                onError(error, route);
+            }
+        })();
     }
 }
+
 

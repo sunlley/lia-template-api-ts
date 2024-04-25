@@ -2,7 +2,7 @@
   "compilerOptions": {
     "experimentalDecorators": true,
     "module": "CommonJS",
-    "target": "esnext",
+    "target": "es2020",
     "strict": true,
     "jsx": "preserve",
     "importHelpers": true,
@@ -13,21 +13,26 @@
     "sourceMap": true,
     "baseUrl": ".",
     "outDir": "./output",
-    "rootDir": "./src",
+    "rootDir": ".",
     "types": [
       "webpack-env",
       "node"
     ],
-    "declaration": true,
-    "declarationDir": "dist/type",
+    "resolveJsonModule": true,
+    "declaration": true,// 是否生成声明文件
+    "declarationDir": "dist/type",// 声明文件打包的位置
     "lib": [
       "esnext",
+      "es5",
+      "ES2016",
+      "ES2020",
       "dom",
       "dom.iterable",
       "scripthost"
     ]
   },
   "include": [
+    "__test__",
     "src",
     "src/**/*",
     "global.d.ts"
