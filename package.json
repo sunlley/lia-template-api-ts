@@ -1,6 +1,6 @@
 {
   "name": "cra-template-liaapi-ts",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "keywords": [
     "api",
     "server",
@@ -12,7 +12,7 @@
   },
   "license": "MIT",
   "engines": {
-    "node": ">=16"
+    "node": ">=18"
   },
   "bugs": {
     "url": "https://github.com/sunlley/lia-template-api-ts/issues"

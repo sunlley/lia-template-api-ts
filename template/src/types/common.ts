@@ -1,8 +1,6 @@
 import {Request, Response} from 'express';
 import {NetException} from "../exceptions";
 
-
-
 export class RequestWrapper {
     request: Request;
     __PATH: string;
@@ -15,7 +13,25 @@ export class RequestWrapper {
         let cookiesString = request.headers['cookie'] ?
             request.headers['cookie'] : request.headers['Cookie'] ?
                 request.headers['Cookie'] : request.headers['cookies'] ? request.headers['cookies'] : "";
-        let cookies = String.toMap(cookiesString + "", ';', '=');
+        let cookies:any={};
+        if (cookiesString){
+            // cookiesString = (cookiesString+"").replace(/;/g, '&');
+            cookiesString = cookiesString.toString();
+            let items = cookiesString.split(';');
+            if (items.length>0){
+                for (let i = 0; i < items.length; i++) {
+                    let item = items[i];
+                    let index = item.indexOf('=');
+                    if (index > 0) {
+                        try {
+                            let key = item.substring(0, index);
+                            cookies[key] = item.substring(index + 1);
+                        } catch (e) {
+                        }
+                    }
+                }
+            }
+        }
         cookies = cookies ? cookies : {};
         let query = request.query ? request.query : {};
         let body = request.body ? request.body : {};
@@ -26,15 +42,15 @@ export class RequestWrapper {
 }
 
 export class ResponseWrapper {
-    responst: Response;
+    response: Response;
 
-    constructor(responst: Response) {
-        this.responst = responst;
+    constructor(response: Response) {
+        this.response = response;
     }
 
     onError(error: number | any, message?: string) {
         let result: any = {
-            errno: 500,
+            errno: 5000,
             message: message,
             data: {}
         };
@@ -44,7 +60,7 @@ export class ResponseWrapper {
         } else if (error instanceof Error) {
             result.message = error.message;
         }
-        this.responst.json(result)
+        this.response.json(result)
     }
 
     onResponse(errno: number | any, message: string = 'success', data: any = {}) {
@@ -68,7 +84,7 @@ export class ResponseWrapper {
                 result.data = _data.data;
             }
         }
-        this.responst.json(result);
+        this.response.json(result);
     }
 
 

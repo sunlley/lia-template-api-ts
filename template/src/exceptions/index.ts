@@ -12,7 +12,7 @@ export class NetException extends Error {
 
         let exception = EXCEPTIONS[code];
         if (!exception) {
-            code = 500;
+            code = 5000;
             exception = EXCEPTIONS[code];
         }
         message = isVaN(message) ? exception[language] : language;

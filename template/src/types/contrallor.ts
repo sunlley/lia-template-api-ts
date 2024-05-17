@@ -1,8 +1,8 @@
+import {assert, error} from "../utils";
+
+import {RequestWrapper, ResponseWrapper, RouteMeta} from '../types';
 import 'node:util'
 import {inspect} from "node:util";
-
-import {assert, error} from "../utils";
-import {RequestWrapper, ResponseWrapper, RouteMeta} from '../types';
 
 export enum LANGUAGE {
     en = 'en',
@@ -53,6 +53,7 @@ export class Page {
 }
 
 class ParamsController {
+    [key:string]:any;
     assertParams(params: any, keys: string[] = []) {
         // console.log(this.constructor.name, 'assertParams', params, keys)
         if (!params) {
@@ -62,15 +63,15 @@ class ParamsController {
     }
 }
 
-export class BaseController extends ParamsController {
-    public whiteList: string[];
+export class BaseController extends ParamsController{
+    public whiteList: string[]=[];
     public controller: string;
 
     constructor(whiteList: string[] = []) {
         super()
-        this.whiteList = whiteList;
+        this.whiteList.push(... (whiteList??[]));
         this.controller = this.constructor.name;
-        this.route = this.route.bind(this);
+        // this.route = this.route.bind(this);
     }
 
     async formatData<T>(origin: any, rules: any, formats: any): Promise<T> {
@@ -145,7 +146,7 @@ export class BaseController extends ParamsController {
         return new Page(params);
     }
 
-    route(route: RouteMeta, req: RequestWrapper, res: ResponseWrapper) {
+    execute(route: RouteMeta, req: RequestWrapper, res: ResponseWrapper) {
         console.log(new Date(), 'Call==>>', this.constructor.name, '#-', route.path, "-|-",JSON.stringify(req.__PARAMS));
         const _this: any = this;
         const onError = (error: any, route: RouteMeta) => {

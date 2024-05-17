@@ -1,52 +1,23 @@
 import '../global';
-const matchArgv = () => {
-    const args = process.argv.slice(2);
-    console.log('Start Args',args);
-    let params:any={};
-    let index=0;
-    for (let i = 0; i < args.length; i++) {
-        if (i<index){continue;}
-        let arg=args[i];
-        if (typeof arg ==='string'){
-            arg = arg.trim();
-            if (arg.indexOf('--')>=0){
-                try {
-                    let key = arg.replace('--', '');
-                    let value = args[i + 1];
-                    if (!value){
-                        continue;
-                    }
-                    if (typeof value === 'string' && value.indexOf('--')>=0){
-                        continue;
-                    }
-                    index = i + 1;
-                    params[key] = value;
-                } catch (e) {
-                }
-            }
-        }
-    }
-    return params;
-}
-const NODE_ARGS=matchArgv();
-process.env.NODE_ENV = NODE_ARGS.env?NODE_ARGS.env.toLowerCase():'development';
-let config = require('./config.common');
+import * as process from "process";
 
-if (process.env.NODE_ENV === "development") {
+const match_config = () => {
+    let config:any = require('./config.common.js');
     try {
-        let _config = require('./config.dev');
-        config = Object.assign(config, _config);
+        let _config = require(
+            process.env.NODE_ENV==='production'?
+                './config.production.js':
+                './config.development.js'
+        );
+        config={
+            ...config,
+            ..._config
+        }
     } catch (e) {
+        // console.log('config',e)
     }
+    return config;
 }
-if (process.env.NODE_ENV === "production") {
-    try {
-        let _config = require('./config');
-        config = Object.assign(config, _config);
-    } catch (e) {
-    }
-}
-config.NODE_ENV = process.env.NODE_ENV;
-config.NODE_ARGS = NODE_ARGS;
-global.CONFIG = config;
-export default config;
+const CONFIG = match_config();
+global.CONFIG = CONFIG;
+export default CONFIG;
