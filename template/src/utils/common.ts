@@ -1,20 +1,22 @@
 import {NetException} from "../exceptions";
 
-export const isVaN = (value:any) => {
+export const isVaN = (value: any) => {
     return value == null || value === '';
 }
-export const randomString =  (length:number, type?:string) =>{
-    if (length ===  0) { length = 6; }
-    if (!type ) { type = 'normal'; }
+export const randomString = (length: number, type?: string) => {
+    if (length === 0) {
+        length = 6;
+    }
+    if (!type) {
+        type = 'normal';
+    }
     var e = '';
     var keys = '';
     if (type === 'number') {
         keys = '1234567890';
-    }
-    else if (type === 'all') {
+    } else if (type === 'all') {
         keys = '!@#$%^&*()_+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890';
-    }
-    else {
+    } else {
         keys = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890';
     }
     for (var o = 0; o < length; o++) {
@@ -52,7 +54,7 @@ export const error = (options: {
 }
 
 export const assert = (params: any,
-                       keys: (string | `${string}|${string}`)[] | ([_key: string | `${string}|${string}`, _type: string])[],
+                       keys: (string | `${string}|${string}`)[] | ([_key: string | `${string}|${string}`, _default: any, _type: string])[],
                        tag?: string) => {
     const check_value = (key: string, value: any, type: any) => {
         if (type === 'array') {
@@ -72,9 +74,17 @@ export const assert = (params: any,
     }
     for (let key of keys) {
         let _key = '';
-        let _type:string|undefined;
+        let _default:any;
+        let _type: string | undefined;
         if (Array.isArray(key)) {
-            [_key, _type] = key;
+            if (key.length > 2) {
+                [_key, _default, _type] = key;
+            } else if (key.length > 1) {
+                [_key, _default] = key;
+            } else if (key.length > 0) {
+                [_key] = key;
+            }
+
         } else if (typeof key === 'string') {
             _key = key;
         }
@@ -82,23 +92,36 @@ export const assert = (params: any,
             //都为空时 报错
             let nullCount = 0;
             let keysTemp = _key.split('|');
+            let keyTemp = '';
             for (const keysTempElement of keysTemp) {
                 let value = params[keysTempElement];
                 if (isVaN(value)) {
                     nullCount++;
-                }else {
-                    check_value(keysTempElement, value,_type);
+                } else {
+                    keyTemp=keysTempElement;
+                    check_value(keysTempElement, value, _type);
                 }
             }
             if (nullCount === keysTemp.length) {
-                error({code: 1001, values: [_key]});
+                if (_default!=undefined){
+                    for (const key2 of keysTemp) {
+                        params[key2]=_default;
+                    }
+                }else {
+                    error({code: 1001, values: [_key]});
+
+                }
             }
         } else {
             let value = params[_key];
             if (isVaN(params[_key])) {
-                error({code: 1001, values: [_key]});
-            }else {
-                check_value(_key, value,_type);
+                if (_default!=undefined){
+                    params[_key]=_default;
+                }else {
+                    error({code: 1001, values: [_key]});
+                }
+            } else {
+                check_value(_key, value, _type);
             }
         }
 

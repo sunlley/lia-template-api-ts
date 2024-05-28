@@ -13,7 +13,7 @@ npx create-react-app my-app --template liaapi-ts
 
 yarn create react-app my-app --template liaapi-ts
 ```
-
+//https://registry.npmjs.org/cra-template-liaapi-ts/-/cra-template-liaapi-ts-1.0.4.tgz"
 For more information, please refer to:
 
 - [Getting Started](https://create-react-app.dev/docs/getting-started) – How to create a new app.
