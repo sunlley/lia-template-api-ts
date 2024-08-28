@@ -1,13 +1,8 @@
+import {assert, error} from "../utils";
+
+import {RequestWrapper, ResponseWrapper, RouteMeta} from '../types';
 import 'node:util'
 import {inspect} from "node:util";
-
-import {assert, error} from "../utils";
-import {RequestWrapper, ResponseWrapper, RouteMeta} from '../types';
-
-export enum LANGUAGE {
-    en = 'en',
-    zh = 'zh'
-}
 
 export class Page {
     page: number;
@@ -52,25 +47,13 @@ export class Page {
 
 }
 
-class ParamsController {
-    assertParams(params: any, keys: string[] = []) {
-        // console.log(this.constructor.name, 'assertParams', params, keys)
-        if (!params) {
-            return;
-        }
-        assert(params, keys);
-    }
-}
-
-export class BaseController extends ParamsController {
-    public whiteList: string[];
+export class BaseController {
+    public whiteList: string[] = [];
     public controller: string;
 
     constructor(whiteList: string[] = []) {
-        super()
-        this.whiteList = whiteList;
+        this.whiteList.push(...(whiteList ?? []));
         this.controller = this.constructor.name;
-        this.route = this.route.bind(this);
     }
 
     async formatData<T>(origin: any, rules: any, formats: any): Promise<T> {
@@ -87,7 +70,6 @@ export class BaseController extends ParamsController {
                 } else {
                     delete origin[rule];
                 }
-
                 continue;
             }
             let paramsKeys = rule.split('|');
@@ -107,7 +89,6 @@ export class BaseController extends ParamsController {
         }
         return origin as T;
     }
-
 
     formatDateExclude(data: any, keys: string[]) {
         for (const dataKey in data) {
@@ -141,13 +122,10 @@ export class BaseController extends ParamsController {
         return data;
     }
 
-    page(params: any) {
-        return new Page(params);
-    }
-
-    route(route: RouteMeta, req: RequestWrapper, res: ResponseWrapper) {
-        console.log(new Date(), 'Call==>>', this.constructor.name, '#-', route.path, "-|-",JSON.stringify(req.__PARAMS));
+    execute(route: RouteMeta, req: RequestWrapper, res: ResponseWrapper) {
+        console.log(new Date(), 'Call==>>', this.constructor.name, '#-', route.path, "-|-", JSON.stringify(req.__PARAMS));
         const _this: any = this;
+
         const onError = (error: any, route: RouteMeta) => {
             console.log('-')
             console.log('-', route.metadata, route.path, new Date())
@@ -157,52 +135,67 @@ export class BaseController extends ParamsController {
                 colors: true,
                 showHidden: false
             }))
-            res.onError(error);
+            res.onError(error, {
+                params: req.__PARAMS
+            });
         }
+
         const onResponse = (result: any) => {
             if (typeof result === 'object') {
-                if (result.hasOwnProperty('errno')
-                    && result.hasOwnProperty('data')) {
-                    if (!result.message) {
-                        result.message = 'success';
-                    }
-                    res.onResponse(result);
+                if (result.hasOwnProperty('errno')) {
+                    res.onResponse(result.data, {...result, params: req.__PARAMS});
                 } else {
-                    res.onResponse({errno: 0, message: 'success', data: result});
+                    res.onResponse(result, {params: req.__PARAMS});
                 }
             } else {
-                res.onResponse({errno: 0, message: 'success', data: {result}});
+                res.onResponse(result, {params: req.__PARAMS});
             }
         }
 
         (() => {
             try {
-                if (!_this[route.method]) {
+                const fuc: (
+                    params: { [key: string]: any },
+                    req: RequestWrapper,
+                    res: ResponseWrapper) => any = _this[route.method];
+                if (fuc == undefined) {
                     error({code: 5001, values: [`${route.method}`]});
                     return
                 }
-                // let params = Object.assign(Object.toSerialize(req.__COOKIES), req.__PARAMS);
-                const params = {
-                    // ...req.__COOKIES,
-                    ...req.__PARAMS,
-                    ...(req.request.params || {})
-                }
-
-                const result = _this[route.method](params, req, res);
+                const params = {...req.__PARAMS}
+                const result = fuc(params, req, res);
                 if (result instanceof Promise) {
-                    result.then(result => {
-                        onResponse(result)
+                    result.then(it => {
+                        onResponse(it)
                     }).catch(error => {
                         onError(error, route);
                     })
                 } else {
                     onResponse(result);
                 }
-            } catch (error) {
+            } catch (error: any) {
                 onError(error, route);
             }
         })();
     }
+
+}
+
+export class ParamsController extends BaseController {
+    assertParams(params: any, keys: string[] = []) {
+        if (!params) {
+            return;
+        }
+        assert(params, keys);
+    }
+}
+
+export class FullController extends ParamsController {
+
+    page(params: any) {
+        return new Page(params);
+    }
+
 }
 
 

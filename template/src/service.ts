@@ -11,5 +11,5 @@ const start = async () => {
 }
 
 
-start()
+start().then()
 

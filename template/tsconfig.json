@@ -19,23 +19,20 @@
       "node"
     ],
     "resolveJsonModule": true,
-    "declaration": true,// 是否生成声明文件
-    "declarationDir": "dist/type",// 声明文件打包的位置
+    "declaration": true,
+    "declarationDir": "dist/type",
     "lib": [
       "esnext",
       "es5",
       "ES2016",
-      "ES2020",
-      "dom",
-      "dom.iterable",
-      "scripthost"
+      "ES2020"
     ]
   },
   "include": [
-    "__test__",
+    "test",
     "src",
     "src/**/*",
-    "global.d.ts"
+    "global.d.ts",
   ],
   "exclude": [
     "node_modules"

@@ -1,5 +1,10 @@
 import {Request, Response} from 'express';
-import {NetException} from "../exceptions";
+
+export type RouteMeta = {
+    method: string,
+    path: string,
+    metadata?: any
+}
 
 export class RequestWrapper {
     request: Request;
@@ -13,12 +18,12 @@ export class RequestWrapper {
         let cookiesString = request.headers['cookie'] ?
             request.headers['cookie'] : request.headers['Cookie'] ?
                 request.headers['Cookie'] : request.headers['cookies'] ? request.headers['cookies'] : "";
-        let cookies:any={};
-        if (cookiesString){
+        let cookies: any = {};
+        if (cookiesString) {
             // cookiesString = (cookiesString+"").replace(/;/g, '&');
             cookiesString = cookiesString.toString();
             let items = cookiesString.split(';');
-            if (items.length>0){
+            if (items.length > 0) {
                 for (let i = 0; i < items.length; i++) {
                     let item = items[i];
                     let index = item.indexOf('=');
@@ -36,8 +41,8 @@ export class RequestWrapper {
         let query = request.query ? request.query : {};
         let body = request.body ? request.body : {};
         this.__COOKIES = cookies;
-        this.__PARAMS = Object.assign(JSON.parse(JSON.stringify(query)), JSON.parse(JSON.stringify(body)))
-
+        // this.__PARAMS = Object.assign(JSON.parse(JSON.stringify(query)), JSON.parse(JSON.stringify(body)))
+        this.__PARAMS = {...query,...body};
     }
 }
 
@@ -48,41 +53,43 @@ export class ResponseWrapper {
         this.response = response;
     }
 
-    onError(error: number | any, message?: string) {
-        let result: any = {
-            errno: 5000,
-            message: message,
+    onError(error: string | { toString: () => string },
+            option?: {
+                errno?: number | string,
+                message?: string,
+                params?: any
+            }) {
+        let {errno, message, params} = option ?? {};
+        const result: any = {
+            errno: errno ?? 5000,
+            message: message ?? '',
             data: {}
         };
-        if (error instanceof NetException) {
-            result.errno = error.code;
-            result.message = error.message;
-        } else if (error instanceof Error) {
-            result.message = error.message;
+        if (CONFIG.debug){
+            result._params = params;
+        }
+        if (typeof error === 'string') {
+            result.message = error;
+        } else if (error) {
+            result.message = error.toString()
         }
         this.response.json(result)
     }
 
-    onResponse(errno: number | any, message: string = 'success', data: any = {}) {
+    onResponse(data: any = {},
+               option?: {
+                   errno?: number | string | { toString: () => string }
+                   message?: string,
+                   params?: any
+               }) {
+        let {errno, message, params} = option ?? {};
         let result: any = {
-            errno: errno,
-            message: message,
-            data: data
+            errno: errno ?? 0,
+            message: message ?? 'success',
+            data: data,
         };
-        if (typeof errno === 'string' || isNaN(errno)) {
-            let _data: any = errno;
-            if (typeof errno === 'string') {
-                _data = JSON.parse(errno);
-            }
-            if (!isNaN(_data.errno)) {
-                result.errno = _data.errno;
-            }
-            if (_data.message) {
-                result.message = _data.message;
-            }
-            if (_data.data) {
-                result.data = _data.data;
-            }
+        if (CONFIG.debug){
+            result._params = params;
         }
         this.response.json(result);
     }
@@ -90,12 +97,4 @@ export class ResponseWrapper {
 
 }
 
-export interface ControllerDataFormat<T> {
-    (key: string,value?: any,data?:T): any;
-}
 
-export type RouteMeta={
-    method:string,
-    path:string,
-    metadata?:any
-}

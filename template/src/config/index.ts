@@ -1,4 +1,3 @@
-import '../global';
 import * as process from "process";
 
 const match_config = () => {

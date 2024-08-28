@@ -1,21 +1,17 @@
-import {Controller, Get} from "../decorators";
-import {BaseController} from "../types";
+import {FullController} from "../types";
 import {error} from "../utils";
+import {Authorization, Controller, Get} from "lia-decorators";
 
-@Controller('/:chainId/graph')
-class WatchControl extends BaseController {
+@Controller('/graph')
+class WatchControl extends FullController {
 
-    constructor() {
-        super();
-    }
 
     @Get('/query')
+    @Authorization(false)
     async action_query(params: any,req:any) {
-        // console.log('params ==>>',params)
-        // console.log('req ==>>',req)
-        // let {data, method} = params;
         // data = JSON.parse(Buffer.from(data, "base64").toString());
-        error(5000)
+        // error(5000)
+        return{result:true}
     }
 
 

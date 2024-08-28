@@ -1,23 +1,28 @@
-# cra-template-typescript
+# cra-template-liaapi-ts
 
-This is the official TypeScript template for [Create React App](https://github.com/facebook/create-react-app).
+This A ready to use API service project developed based on ExpressJS, simplifying the workflow for developers.
+
+[√] Support annotation request path
+
+[√] Support custom error messages
+
+[√] Support middleware
 
 To use this template, add `--template typescript` when creating a new app.
 
 For example:
 
+if Use load-template
+```sh
+npx load-template my-app --template cra-template-liaapi-ts
+```
+
+if Use create-react-app
 ```sh
 npx create-react-app my-app --template liaapi-ts
-
 # or
-
-yarn create react-app my-app --template liaapi-ts
+yarn create-react-app my-app --template liaapi-ts
 ```
-//https://registry.npmjs.org/cra-template-liaapi-ts/-/cra-template-liaapi-ts-1.0.4.tgz"
-For more information, please refer to:
-
-- [Getting Started](https://create-react-app.dev/docs/getting-started) – How to create a new app.
-- [User Guide](https://create-react-app.dev) – How to develop apps bootstrapped with Create React App.
 
 
-
+> ☺️ Suggest using [load-template](https://www.npmjs.com/package/load-template) to create a project

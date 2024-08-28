@@ -1,56 +1,41 @@
-import {NetException} from "../exceptions";
+import * as fs from "node:fs";
+import {Stats} from "fs";
 
-export const isVaN = (value: any) => {
+export const isVaN = (value: any): boolean => {
     return value == null || value === '';
 }
-export const randomString = (length: number, type?: string) => {
-    if (length === 0) {
-        length = 6;
-    }
-    if (!type) {
-        type = 'normal';
-    }
-    var e = '';
-    var keys = '';
-    if (type === 'number') {
-        keys = '1234567890';
-    } else if (type === 'all') {
-        keys = '!@#$%^&*()_+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890';
-    } else {
-        keys = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890';
-    }
-    for (var o = 0; o < length; o++) {
-        e += keys.charAt(Math.floor(Math.random() * keys.length));
-    }
-    return e;
-};
-export const random = (start: number, end: number) => {
-    return Math.floor(Math.random() * (end - start)) + start;
+export const isStr = (value: any): boolean => {
+    return typeof value === 'string';
+}
+export const isArr = (value: any): boolean => {
+    return Array.isArray(value);
+}
+export const isNum = (value: any): boolean => {
+    return !isNaN(value);
 }
 
 export const error = (options: {
-    code: number,
+    code?: number,
     message?: string,
-    language?: string,
     values?: any[]
 } | number) => {
-    if (typeof options === 'number') {
-        throw new NetException(options, '', 'en');
-    } else {
-        let {code, message, language = 'en', values} = options;
-        const exception = new NetException(code, message, language);
-        if (!message) {
-            message = exception.message;
-        }
-        if (values && values.length > 0) {
-            for (let i = 0; i < values.length; i++) {
-                message = message.replace(`%s${i}`, values[i]);
-            }
-            exception.message = message;
-        }
-        exception.message = message;
-        throw exception;
+    if (typeof options === "number") {
+        options = {code: options}
     }
+    let {code, message, values} = options;
+    code = code ?? 0;
+    message = message ?? '';
+    if (message == '' || message == undefined) {
+        let exception = CONFIG.exceptions[code];
+        message = exception ?? '';
+    }
+    let result = message.trim();
+    if (values && values.length > 0) {
+        for (let i = 0; i < values.length; i++) {
+            result = result.replace(`%s${i}`, values[i]);
+        }
+    }
+    throw new Error(`${code} # ${result}`);
 }
 
 export const assert = (params: any,
@@ -74,7 +59,7 @@ export const assert = (params: any,
     }
     for (let key of keys) {
         let _key = '';
-        let _default:any;
+        let _default: any;
         let _type: string | undefined;
         if (Array.isArray(key)) {
             if (key.length > 2) {
@@ -89,7 +74,6 @@ export const assert = (params: any,
             _key = key;
         }
         if (_key.indexOf('|') >= 0) {
-            //都为空时 报错
             let nullCount = 0;
             let keysTemp = _key.split('|');
             let keyTemp = '';
@@ -98,16 +82,16 @@ export const assert = (params: any,
                 if (isVaN(value)) {
                     nullCount++;
                 } else {
-                    keyTemp=keysTempElement;
+                    keyTemp = keysTempElement;
                     check_value(keysTempElement, value, _type);
                 }
             }
             if (nullCount === keysTemp.length) {
-                if (_default!=undefined){
+                if (_default != undefined) {
                     for (const key2 of keysTemp) {
-                        params[key2]=_default;
+                        params[key2] = _default;
                     }
-                }else {
+                } else {
                     error({code: 1001, values: [_key]});
 
                 }
@@ -115,9 +99,9 @@ export const assert = (params: any,
         } else {
             let value = params[_key];
             if (isVaN(params[_key])) {
-                if (_default!=undefined){
-                    params[_key]=_default;
-                }else {
+                if (_default != undefined) {
+                    params[_key] = _default;
+                } else {
                     error({code: 1001, values: [_key]});
                 }
             } else {
@@ -127,4 +111,32 @@ export const assert = (params: any,
 
 
     }
+}
+export const isDir = (file: string) => {
+    let stat = fs.lstatSync(file);
+    return stat.isDirectory();
+}
+export const isFile = (file: string) => {
+    let stat = fs.lstatSync(file);
+    return stat.isFile();
+}
+export const loadMiddleware = async (dir: string): Promise<{ [key: string]: (app: any) => {} }> => {
+    let files = fs.readdirSync(dir);
+    let middlewares: { [key: string]: (app: any) => {} } = {};
+    for (const file of files) {
+        let check = isFile(dir + '/' + file)
+        try {
+            if (check) {
+                let {install} = await import(dir + '/' + file);
+                middlewares[file.substr(0, file.indexOf('.'))] = install;
+            } else {
+                let {install} = await import(dir + '/' + file + '/' + 'index');
+                middlewares[file] = install;
+
+            }
+        } catch (e) {
+            throw new Error(`no install found from ${file}`);
+        }
+    }
+    return middlewares;
 }
