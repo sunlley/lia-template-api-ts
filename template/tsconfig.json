@@ -26,7 +26,18 @@
       "es5",
       "ES2016",
       "ES2020"
-    ]
+    ],
+    "paths": {
+      "@": ["./src"],
+      "@config":[ "./src/config"],
+      "@controller":[ "./src/controller"],
+      "@core": ["./src/core"],
+      "@daos": ["./src/daos"],
+      "@middleware":[ "./src/middleware"],
+      "@services": ["./src/services"],
+      "@types": ["./src/types"],
+      "@utils": ["./src/utils"]
+    }
   },
   "include": [
     "test",

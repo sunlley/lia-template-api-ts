@@ -1,12 +1,10 @@
 import './global'
-import CONFIG from './config';
+import CONFIG from '@config';
 import express, {Application, Response, Request, IRouter} from 'express';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
-import Controller from './controller';
-import {install_core} from "./core";
-import {loadMiddleware} from "./utils";
+import {install_controller, install_core, install_middleware} from "@core";
 
 const logs = () => {
     const message =
@@ -33,7 +31,6 @@ const start = async () => {
     })
     console.log(`======================= Engine Start =======================`);
     await install_core();
-    console.log('core loaded')
 
     const app: Application = express();
     app.use(bodyParser.json());
@@ -54,12 +51,9 @@ const start = async () => {
             }
         });
     }
-    const middlewares = await loadMiddleware(__dirname + '/middleware');
-    Object.values(middlewares).forEach((install) => {
-        install(router)
-    })
 
-    new Controller(router).load();
+    await install_middleware(router);
+    await install_controller(router);
 
     app.use(router);
 

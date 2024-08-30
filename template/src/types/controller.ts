@@ -1,8 +1,6 @@
-import {assert, error} from "../utils";
-
-import {RequestWrapper, ResponseWrapper, RouteMeta} from '../types';
-import 'node:util'
 import {inspect} from "node:util";
+import {assert, error} from "@utils";
+import {RequestWrapper, ResponseWrapper, RouteMeta} from './common';
 
 export class Page {
     page: number;
@@ -154,16 +152,12 @@ export class BaseController {
 
         (() => {
             try {
-                const fuc: (
-                    params: { [key: string]: any },
-                    req: RequestWrapper,
-                    res: ResponseWrapper) => any = _this[route.method];
-                if (fuc == undefined) {
+                if ( _this[route.method] == undefined) {
                     error({code: 5001, values: [`${route.method}`]});
                     return
                 }
                 const params = {...req.__PARAMS}
-                const result = fuc(params, req, res);
+                const result =  _this[route.method](params, req, res);
                 if (result instanceof Promise) {
                     result.then(it => {
                         onResponse(it)
@@ -182,6 +176,9 @@ export class BaseController {
 }
 
 export class ParamsController extends BaseController {
+    constructor(whiteList: string[] = []) {
+      super(whiteList);
+    }
     assertParams(params: any, keys: string[] = []) {
         if (!params) {
             return;
@@ -191,9 +188,15 @@ export class ParamsController extends BaseController {
 }
 
 export class FullController extends ParamsController {
-
+    constructor(whiteList: string[] = []) {
+        super(whiteList);
+    }
     page(params: any) {
         return new Page(params);
+    }
+
+    execute(route: RouteMeta, req: RequestWrapper, res: ResponseWrapper) {
+        super.execute(route, req, res);
     }
 
 }

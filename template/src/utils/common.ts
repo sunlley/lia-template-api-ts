@@ -1,5 +1,4 @@
 import * as fs from "node:fs";
-import {Stats} from "fs";
 
 export const isVaN = (value: any): boolean => {
     return value == null || value === '';

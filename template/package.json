@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "nodemon --ext js,ts --exec  cross-env NODE_ENV=development ts-node ./src/start.ts",
     "start": "cross-env NODE_ENV=production ts-node ./src/start.ts",
+    "serve": "cross-env NODE_ENV=production ts-node ./src/service.ts",
     "test": "ts-node ./test/index.ts",
     "build": "echo 'build'",
     "eject": "echo 'eject'"
@@ -29,6 +30,7 @@
     "@types/node": "^20.8.9",
     "@types/node-cron": "^3.0.11",
     "cross-env": "^7.0.3",
+    "module-alias": "^2.2.3",
     "node-cron": "^3.0.3",
     "nodemon": "^2.0.22",
     "require-all": "^3.0.0",
@@ -40,6 +42,7 @@
     "body-parser": "^1.20.2",
     "cookie-parser": "^1.4.6",
     "crypto-js": "^4.2.0",
+    "dayjs": "^1.11.13",
     "decimal.js": "^10.4.3",
     "ethers": "^5.7.2",
     "express": "^4.18.2",
@@ -52,5 +55,17 @@
   },
   "eslintConfig": {
     "extends": []
+  },
+  "_moduleAliases": {
+    "@": ".",
+    "@config": "src/config",
+    "@controller": "src/controller",
+    "@core": "src/core",
+    "@daos": "src/daos",
+    "@middleware": "src/middleware",
+    "@services": "src/services",
+    "@types": "src/types",
+    "@utils": "src/utils"
   }
+
 }

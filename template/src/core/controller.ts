@@ -1,20 +1,16 @@
 import {Application, IRouter} from "express";
-import {BaseController, FullController, RequestWrapper, ResponseWrapper} from "../types";
+import {BaseController, RequestWrapper, ResponseWrapper} from "@types";
 import {AUTHORIZATION_METADATA, CONTROLLER_METADATA, ROUTE_METADATA} from "lia-decorators";
-import "../global";
 
 const Rules = require('require-all')({
-    dirname: __dirname + '/',
+    dirname: __dirname + '/../controller',
     filter: /^((?!index|install)).*$/,
     resolve: (controller: any) => {
-        // console.log('Rules', 'controller==>>', controller)
         return controller.default
     }
 });
 
 class Controller {
-    // app: Router | Application;
-    // app: Router;
     app: IRouter;
 
     constructor(app: IRouter | Application) {
@@ -121,7 +117,6 @@ class Controller {
                 } else {
                     _path = `${_path}/*`
                 }
-                // logs = [' | ', controller.constructor.name.padEnd(13), ' | ', routeName.padEnd(24), ' | ', type.toUpperCase().padEnd(6), ' | ', _path]
                 logs.push([controller.constructor.name, routeName, type, _path])
 
                 if (type === 'get') {
@@ -166,9 +161,7 @@ class Controller {
             }
             const authMetadata: any = Reflect.getMetadata(AUTHORIZATION_METADATA, prototypes[routeName],);
             if (authMetadata) {
-                // console.log('_path',_path)
                 let {auth, key} = authMetadata;
-                // console.log('authMetaData',authMetadata)
                 if (!auth) {
                     whiteList.push(_path);
                     check_auth(routeName, key)

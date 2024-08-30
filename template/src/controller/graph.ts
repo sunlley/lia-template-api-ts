@@ -1,20 +1,20 @@
-import {FullController} from "../types";
-import {error} from "../utils";
-import {Authorization, Controller, Get} from "lia-decorators";
+import {AssertParams, Authorization, Controller, Get} from "lia-decorators";
+import {FullController} from "@types";
 
 @Controller('/graph')
-class WatchControl extends FullController {
+class GraphControl extends FullController {
 
 
-    @Get('/query')
+    @Get('/test')
     @Authorization(false)
-    async action_query(params: any,req:any) {
-        // data = JSON.parse(Buffer.from(data, "base64").toString());
-        // error(5000)
-        return{result:true}
+    @AssertParams(['username', 'password'])
+    async test(params:any){
+        return{
+            ...params,
+            data:new Date(),
+            message:"test success"
+        }
     }
-
-
 }
 
-export default WatchControl;
+export default GraphControl;

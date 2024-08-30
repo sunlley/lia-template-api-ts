@@ -1,3 +1,5 @@
+require('module-alias/register')
+
 declare global{
     var CONFIG:{
         port:number,

@@ -8,6 +8,15 @@ module.exports = {
         Methods: "PUT,POST,GET,DELETE,OPTIONS",
         Credentials: true
     },
+    keys:{
+    },
+    // mysql:{
+    //     host: "127.0.0.1",
+    //     port: 3306,
+    //     user: 'xx',
+    //     password:'xxxxxxx',
+    //     database:'xx'
+    // },
     // redis:{
     //     host: "127.0.0.1",
     //     port: 6379
